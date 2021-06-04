@@ -1,14 +1,17 @@
-let lastTime: null | number = null
 
-export default {
-	reset: () => {
-		lastTime = null
-	},
-	getOffset: () => {
-		const now = Date.now()
-		const delta = (lastTime || now) - now
-		lastTime = now
+export default () => {
+	let lastTime: null | number = null
 
-		return delta
+	return {
+		reset: () => {
+			lastTime = null
+		},
+		getOffset: () => {
+			const now = Date.now()
+			const delta = now - (lastTime || now)
+			lastTime = now
+
+			return delta
+		}
 	}
 }

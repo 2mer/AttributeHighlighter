@@ -1,10 +1,13 @@
-import { Box, debounce, Fade, Paper } from '@material-ui/core'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { START_RECORDING, STOP_RECORDING } from '../util/actions';
+import { debounce, Fade } from '@material-ui/core'
+import React, { useEffect, useMemo, useState } from 'react'
+import { ADD_MACRO, IS_RECORDING, START_RECORDING, STOP_RECORDING } from '../util/actions';
 
-import styled, { createGlobalStyle } from 'styled-components'
+import styled from 'styled-components'
 import { blue, indigo } from '@material-ui/core/colors';
 import getSelector from '../util/getUniqueSelector';
+import Timer from '../util/timer';
+
+
 
 const AbsoluteWrapper = styled.div`
 	position: fixed;
@@ -31,6 +34,8 @@ export default function RecordingOverlay() {
 
 	const [isRecording, setIsRecording] = useState(false)
 	const [currentTarget, setCurrentTarget] = useState<null | HTMLElement>(null)
+	const [macroActions, setMacroActions] = useState<any[]>([])
+	const [timer] = useState(Timer())
 
 	const debouncedSetCurrentTarget = useMemo(() => {
 		return debounce(setCurrentTarget, 100)
@@ -42,9 +47,23 @@ export default function RecordingOverlay() {
 			switch (msg.type) {
 				case START_RECORDING:
 					setIsRecording(true)
+					sendResponse(true)
 					break;
 				case STOP_RECORDING:
 					setIsRecording(false)
+					sendResponse(false)
+					chrome.runtime.sendMessage(
+						{
+							type: ADD_MACRO,
+							data: {
+								name: 'macro1',
+								actions: macroActions
+							}
+						}
+					)
+					break;
+				case IS_RECORDING:
+					sendResponse(isRecording)
 					break;
 			}
 		}
@@ -53,34 +72,51 @@ export default function RecordingOverlay() {
 		return () => {
 			chrome.runtime.onMessage.removeListener(handleMessage)
 		}
-	}, [])
+	}, [isRecording, macroActions])
 
 	useEffect(() => {
 
-		const handleMouseMove = (e: MouseEvent) => {
-			if (e.target !== currentTarget) {
-				debouncedSetCurrentTarget(e.target as HTMLElement)
+		if (isRecording) {
+			const handleMouseMove = (e: MouseEvent) => {
+				if (e.target !== currentTarget) {
+					debouncedSetCurrentTarget(e.target as HTMLElement)
+				}
+			}
+
+			const handleScroll = () => {
+				setCurrentTarget(null)
+			}
+
+			document.body.addEventListener('mousemove', handleMouseMove)
+			document.body.addEventListener('wheel', handleScroll)
+			return () => {
+				document.body.removeEventListener('mousemove', handleMouseMove)
+				document.body.removeEventListener('wheel', handleScroll)
 			}
 		}
 
-		document.body.addEventListener('mousemove', handleMouseMove)
-		return () => {
-			document.body.removeEventListener('mousemove', handleMouseMove)
-		}
+	}, [currentTarget, isRecording])
 
-	}, [currentTarget])
 
 	useEffect(() => {
 
 		const handleClick = (e: MouseEvent) => {
-			console.log(getSelector(e.target as HTMLElement))
+			const sleepMS = timer.getOffset()
+			const clickSelector = (getSelector(e.target as HTMLElement))
+
+			const newActions = [...macroActions]
+
+			if (sleepMS) newActions.push({ type: 'SLEEP', data: sleepMS })
+			newActions.push({ type: 'click', data: clickSelector })
+
+			setMacroActions(newActions)
 		}
 
 		document.body.addEventListener('click', handleClick)
 		return () => {
 			document.body.removeEventListener('click', handleClick)
 		}
-	}, [])
+	}, [macroActions])
 
 	const computedStyle = useMemo(() => {
 
@@ -100,16 +136,13 @@ export default function RecordingOverlay() {
 
 	return (
 		<AbsoluteWrapper>
-			{/* <Paper>
-					<Box>
-						HELLO WORLD
-					</Box>
-				</Paper> */}
-			<Fade in={isRecording} mountOnEnter unmountOnExit>
+			{/* <Fade in={isRecording && Boolean(currentTarget)} mountOnEnter unmountOnExit> */}
+			{(isRecording && Boolean(currentTarget)) && (
 				<div>
 					<HoverEffect style={computedStyle} />
 				</div>
-			</Fade>
+			)}
+			{/* </Fade> */}
 		</AbsoluteWrapper>
 	)
 }

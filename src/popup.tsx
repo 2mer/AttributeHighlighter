@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardActions, CardContent, CardHeader, IconButton, MuiThemeProvider, Paper, Tooltip, Typography } from "@material-ui/core";
+import { Box, Button, Card, CardActions, CardContent, Divider, IconButton, List, ListItem, MuiThemeProvider, Paper, Tooltip, Typography } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import theme from "./src/theme";
@@ -7,69 +7,15 @@ import theme from "./src/theme";
 import RadioButtonCheckedIcon from '@material-ui/icons/RadioButtonChecked';
 import ReplayIcon from '@material-ui/icons/Replay';
 import { red } from "@material-ui/core/colors";
-import { START_RECORDING, STOP_RECORDING } from "./src/util/actions";
+import { IS_RECORDING, START_RECORDING, STOP_RECORDING, ADDED_MACRO } from "./src/util/actions";
+import { Macro } from "./src/types";
 
 
 const Popup = () => {
-	// const [count, setCount] = useState(0);
-	// const [currentURL, setCurrentURL] = useState<string>();
-
-	//   useEffect(() => {
-	//     chrome.browserAction.setBadgeText({ text: count.toString() });
-	//   }, [count]);
-
-	//   useEffect(() => {
-	//     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-	//       setCurrentURL(tabs[0].url);
-	//     });
-	//   }, []);
-
-	//   const changeBackground = () => {
-	//     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-	//       const tab = tabs[0];
-	//       if (tab.id) {
-	//         chrome.tabs.sendMessage(
-	//           tab.id,
-	//           {
-	//             color: "#555555",
-	//           },
-	//           (msg) => {
-	//             console.log("result message:", msg);
-	//           }
-	//         );
-	//       }
-	//     });
-	//   };
-
 	const [isRecording, setIsRecording] = useState(false)
+	const [macros, setMacros] = useState([])
 
-	// load state on mount
-	useEffect(() => {
-		chrome.storage.sync.get(
-			{
-				isRecording: false,
-			},
-			items => {
-				setIsRecording(items.isRecording)
-			}
-		)
-	}, [])
-
-	const handleRecordingButtonClicked = React.useCallback(() => {
-
-		const toggleTo = !isRecording
-
-		chrome.storage.sync.set(
-			{
-				isRecording: toggleTo,
-			},
-			() => setIsRecording(toggleTo)
-		)
-
-	}, [isRecording])
-
-
-	// update content script
+	// load state on mount (from current tab)
 	useEffect(() => {
 
 		chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
@@ -78,16 +24,56 @@ const Popup = () => {
 				chrome.tabs.sendMessage(
 					tab.id,
 					{
-						type: isRecording ? START_RECORDING : STOP_RECORDING
+						type: IS_RECORDING
 					},
 					(msg) => {
-						console.log("result message:", msg);
+						setIsRecording(msg)
+					}
+				);
+			}
+		});
+
+		const fetchMacros = () => {
+			chrome.storage.sync.get({
+				macros: []
+			}, (items) => {
+				setMacros(items.macros)
+			})
+		}
+
+		fetchMacros()
+
+		const handleMessage = (msg: any) => {
+			if (msg.type === ADDED_MACRO) fetchMacros()
+		}
+
+		chrome.runtime.onMessage.addListener(handleMessage)
+		return () => {
+			chrome.runtime.onMessage.removeListener(handleMessage)
+		}
+	}, [])
+
+	const handleRecordingButtonClicked = React.useCallback(() => {
+
+		const toggleTo = !isRecording
+
+		chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+			const tab = tabs[0];
+			if (tab.id) {
+				chrome.tabs.sendMessage(
+					tab.id,
+					{
+						type: toggleTo ? START_RECORDING : STOP_RECORDING
+					},
+					(msg) => {
+						setIsRecording(msg)
 					}
 				);
 			}
 		});
 
 	}, [isRecording])
+
 
 	return (
 		<Box width="300px" display="flex" flexDirection="column" gridGap="1rem">
@@ -97,6 +83,17 @@ const Popup = () => {
 						<Typography align="center" color="primary" variant="h5">Re:Me</Typography>
 						<ReplayIcon color="primary" />
 					</Box>
+					{Boolean(macros.length) && (
+						<Paper variant="outlined">
+							<List>
+								{macros.map((macro: Macro) => {
+									return (
+										<ListItem button key={macro.name}>{macro.name}</ListItem>
+									)
+								})}
+							</List>
+						</Paper>
+					)}
 				</CardContent>
 			</Card>
 
