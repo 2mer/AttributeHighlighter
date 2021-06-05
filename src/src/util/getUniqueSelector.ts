@@ -1,5 +1,10 @@
 const getSelector = (node: HTMLElement): string => {
+	if (node.id)
+		return `#${node.id}`;
+
 	if (node.parentElement) {
+
+
 		const parent = node.parentElement
 		const nodes = parent?.children
 		const filteredNodes = []
@@ -19,9 +24,9 @@ const getSelector = (node: HTMLElement): string => {
 			}
 			appendix = `:nth-of-type(${index + 1})`;
 		}
-		return getSelector(parent) + " > " + node.tagName + appendix
+		return getSelector(parent) + " > " + node.tagName.toLowerCase() + appendix
 	} else {
-		return node.tagName
+		return node.tagName.toLowerCase()
 	}
 }
 

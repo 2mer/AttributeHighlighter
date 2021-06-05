@@ -1,2 +1,2 @@
 export type MacroAction = { type: string, data?: any }
-export type Macro = { name: string, actions: MacroAction[] }
+export type Macro = { id?: string, name: string, actions: MacroAction[] }

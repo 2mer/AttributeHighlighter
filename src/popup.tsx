@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardActions, CardContent, Divider, IconButton, List, ListItem, MuiThemeProvider, Paper, Tooltip, Typography } from "@material-ui/core";
+import { Box, Button, Card, CardActions, CardContent, Divider, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, MuiThemeProvider, Paper, Tooltip, Typography } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import theme from "./src/theme";
@@ -7,9 +7,10 @@ import theme from "./src/theme";
 import RadioButtonCheckedIcon from '@material-ui/icons/RadioButtonChecked';
 import ReplayIcon from '@material-ui/icons/Replay';
 import { red } from "@material-ui/core/colors";
-import { IS_RECORDING, START_RECORDING, STOP_RECORDING, ADDED_MACRO } from "./src/util/actions";
+import { IS_RECORDING, START_RECORDING, STOP_RECORDING, ADDED_MACRO, DELETE_MACRO, RUN_MACRO } from "./src/util/actions";
 import { Macro } from "./src/types";
 
+import CloseIcon from 'mdi-material-ui/Close'
 
 const Popup = () => {
 	const [isRecording, setIsRecording] = useState(false)
@@ -74,6 +75,32 @@ const Popup = () => {
 
 	}, [isRecording])
 
+	const handleDeleteMacroClicked = React.useCallback((macroId) => {
+		chrome.runtime.sendMessage({
+			type: DELETE_MACRO,
+			data: macroId
+		})
+	}, [])
+
+	const handleRunMacroClicked = React.useCallback((macro) => {
+		// chrome.runtime.sendMessage({
+		// 	type: RUN_MACRO,
+		// 	data: macro
+		// })
+
+		chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+			const tab = tabs[0];
+			if (tab.id) {
+				chrome.tabs.sendMessage(
+					tab.id,
+					{
+						type: RUN_MACRO,
+						data: macro
+					},
+				);
+			}
+		});
+	}, [])
 
 	return (
 		<Box width="300px" display="flex" flexDirection="column" gridGap="1rem">
@@ -88,7 +115,14 @@ const Popup = () => {
 							<List>
 								{macros.map((macro: Macro) => {
 									return (
-										<ListItem button key={macro.name}>{macro.name}</ListItem>
+										<ListItem button key={macro.name} onClick={() => handleRunMacroClicked(macro)}>
+											<ListItemText primary={macro.name} />
+											<ListItemSecondaryAction>
+												<IconButton edge="end" onClick={() => handleDeleteMacroClicked(macro.id)}>
+													<CloseIcon />
+												</IconButton>
+											</ListItemSecondaryAction>
+										</ListItem>
 									)
 								})}
 							</List>
@@ -113,10 +147,10 @@ const Popup = () => {
 };
 
 ReactDOM.render(
-	<React.StrictMode>
-		<MuiThemeProvider theme={theme}>
-			<Popup />
-		</MuiThemeProvider>
-	</React.StrictMode>,
-	document.getElementById("root")
+	// <React.StrictMode>
+	<MuiThemeProvider theme={theme}>
+		<Popup />
+	</MuiThemeProvider>
+	// </React.StrictMode>,
+	, document.getElementById("root")
 );

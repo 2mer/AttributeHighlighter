@@ -26,6 +26,11 @@ const HoverEffect = styled.div`
 	border-radius: 4px;
 	box-sizing: border-box;
 	transition: all .225s;
+
+	top: 0px;
+	left: 0px;
+	width: 0px;
+	height: 0px;
 `
 
 const INDICATOR_PADDING = 6;
@@ -107,7 +112,7 @@ export default function RecordingOverlay() {
 			const newActions = [...macroActions]
 
 			if (sleepMS) newActions.push({ type: 'SLEEP', data: sleepMS })
-			newActions.push({ type: 'click', data: clickSelector })
+			newActions.push({ type: 'CLICK', data: clickSelector })
 
 			setMacroActions(newActions)
 		}
@@ -136,13 +141,11 @@ export default function RecordingOverlay() {
 
 	return (
 		<AbsoluteWrapper>
-			{/* <Fade in={isRecording && Boolean(currentTarget)} mountOnEnter unmountOnExit> */}
-			{(isRecording && Boolean(currentTarget)) && (
+			<Fade in={isRecording && Boolean(currentTarget)} mountOnEnter unmountOnExit>
 				<div>
 					<HoverEffect style={computedStyle} />
 				</div>
-			)}
-			{/* </Fade> */}
+			</Fade>
 		</AbsoluteWrapper>
 	)
 }
