@@ -8,23 +8,10 @@ import { RUN_MACRO } from '../util/actions'
 // import queryString from 'query-string'
 import { Macro } from '../types'
 
-import MacroList from './MacroList'
+// import MacroList from './MacroList'
 import MacroStepper from './MacroStepper'
+import { useSnackbar } from 'notistack'
 
-const ShadeWrapper = styled.div`
-	position: absolute;
-	z-index: 999999;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-
-	background-color: #00000022;
-
-	display: flex;
-	justify-content: flex-end;
-	align-items: flex-start;
-`
 
 const StyledDialog = styled(Dialog)`
 	direction: ltr;
@@ -45,6 +32,12 @@ const MACRO_ACTIONS: any = {
 		if (el) {
 			(el as HTMLElement).click()
 		}
+	},
+
+	TEXT: ({ selector, text }: { selector: string, text: string }) => {
+		const el = document.querySelector(selector) as HTMLElement
+		el.focus()
+		document.execCommand('insertHTML', false, text)
 	}
 }
 
@@ -53,11 +46,10 @@ export default function RunMacroOverlay() {
 	const [open, setOpen] = useState(false)
 	const [macro, setMacro] = useState<null | Macro>(null)
 	const [currentAction, setCurrentAction] = useState(-1)
+	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+	// const xxx = useSnackbar();
 
-	// useEffect(() => {
-	// 	const params = queryString.parse(window.location.search)
-	// 	if (params.macro)
-	// }, [])
+	// console.log(xxx)
 
 	useEffect(() => {
 
@@ -77,9 +69,11 @@ export default function RunMacroOverlay() {
 	const handleRunMacroClicked = useCallback(() => {
 		(async () => {
 			if (macro) {
+				setOpen(false)
 				let index = 0;
 				for (let action of macro.actions) {
 					setCurrentAction(index++)
+					enqueueSnackbar(`${action.type} - ${action.data} ...`, { variant: 'info' })
 					await (MACRO_ACTIONS[action.type])(action.data)
 				}
 			}

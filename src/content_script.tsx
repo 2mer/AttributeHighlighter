@@ -11,6 +11,7 @@
 // console.log('Hey guys, content script mounter!!!')
 
 import { MuiThemeProvider } from '@material-ui/core';
+import { SnackbarProvider } from 'notistack';
 import React from 'react'
 import ReactDOM from "react-dom";
 import RecordingOverlay from './src/components/RecordingOverlay';
@@ -23,8 +24,10 @@ document.body.append(remeRoot)
 
 ReactDOM.render((
 	<MuiThemeProvider theme={theme}>
-		<RecordingOverlay />
-		<RunMacroOverlay />
+		<SnackbarProvider maxSnack={3}>
+			<RecordingOverlay />
+			<RunMacroOverlay />
+		</SnackbarProvider>
 	</MuiThemeProvider>
 ), remeRoot)
 

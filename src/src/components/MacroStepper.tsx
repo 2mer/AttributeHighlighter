@@ -1,10 +1,11 @@
-import { Avatar, Divider, IconButton, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Step, StepConnector, StepContent, StepLabel, Stepper, Typography } from '@material-ui/core'
+import { Avatar, ListItemAvatar, Step, StepContent, StepLabel, Stepper, Typography } from '@material-ui/core'
 import React from 'react'
 import { Macro } from '../types'
 
 import CursorDefaultClickIcon from 'mdi-material-ui/CursorDefaultClick'
 import SleepIcon from 'mdi-material-ui/Sleep'
-import CloseIcon from 'mdi-material-ui/Close'
+import FormatTextIcon from 'mdi-material-ui/FormatText'
+// import CloseIcon from 'mdi-material-ui/Close'
 import { blue } from '@material-ui/core/colors'
 
 export default function MacroStepper({
@@ -24,19 +25,20 @@ export default function MacroStepper({
 										<Avatar style={{ backgroundColor: blue[500], width: 24, height: 24 }}>
 											{(action.type === 'CLICK') && <CursorDefaultClickIcon fontSize="small" />}
 											{(action.type === 'SLEEP') && <SleepIcon fontSize="small" />}
+											{(action.type === 'TEXT') && <FormatTextIcon fontSize="small" />}
 										</Avatar>
 									</ListItemAvatar>
 								}>
 									{Boolean(index === activeStep) ? (
-										<span style={{ background: blue[500], color: '#FAFAFA' }} >{action.type}</span>
+										<span style={{ background: blue[500], color: '#FAFAFA', padding: '6px 12px', borderRadius: 4 }} >{action.type}</span>
 									) : (
 										action.type
 									)}
 								</StepLabel>
 
+								{/* text */}
 								<StepContent>
-									{/* text */}
-									<Typography color="textSecondary" variant="subtitle2" style={{ backgroundColor: '#00000036', padding: '6px 12px', borderRadius: 8 }}>{action.data}</Typography>
+									<Typography color="textSecondary" variant="subtitle2" style={{ backgroundColor: '#00000036', padding: '6px 12px', borderRadius: 8 }}>{action.data?.text || action.data}</Typography>
 								</StepContent>
 
 

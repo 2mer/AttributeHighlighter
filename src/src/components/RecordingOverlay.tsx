@@ -1,5 +1,5 @@
 import { debounce, Fade } from '@material-ui/core'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { ADD_MACRO, IS_RECORDING, START_RECORDING, STOP_RECORDING } from '../util/actions';
 
 import styled from 'styled-components'
@@ -41,6 +41,11 @@ export default function RecordingOverlay() {
 	const [currentTarget, setCurrentTarget] = useState<null | HTMLElement>(null)
 	const [macroActions, setMacroActions] = useState<any[]>([])
 	const [timer] = useState(Timer())
+
+	const macroActionsRef = useRef<any[]>([])
+	useEffect(() => {
+		macroActionsRef.current = macroActions
+	}, [macroActions])
 
 	const debouncedSetCurrentTarget = useMemo(() => {
 		return debounce(setCurrentTarget, 100)
@@ -113,6 +118,35 @@ export default function RecordingOverlay() {
 
 			if (sleepMS) newActions.push({ type: 'SLEEP', data: sleepMS })
 			newActions.push({ type: 'CLICK', data: clickSelector })
+
+			const target = (e?.target as HTMLElement)
+
+			if (target?.tagName === 'INPUT') {
+				const firstVal = (target as any).value
+				const handleBlur = (e: Event) => {
+
+					const newActions = [...macroActionsRef.current]
+
+					const text = (e.target as any)?.value
+
+					if (text && (text !== firstVal)) {
+						const sleepMS = timer.getOffset()
+						if (sleepMS) newActions.push({ type: 'SLEEP', data: sleepMS })
+						newActions.push({
+							type: 'TEXT', data: {
+								selector: getSelector(e.target as HTMLElement),
+								text
+							}
+						})
+
+						setMacroActions(newActions)
+					}
+
+					e.target?.removeEventListener('blur', handleBlur)
+				}
+
+				e.target?.addEventListener('blur', handleBlur)
+			}
 
 			setMacroActions(newActions)
 		}
