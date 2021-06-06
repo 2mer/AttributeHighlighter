@@ -6,7 +6,7 @@ import styled from 'styled-components'
 import { RUN_MACRO } from '../util/actions'
 
 // import queryString from 'query-string'
-import { Macro } from '../types'
+import { Macro, MacroActionData } from '../types'
 
 // import MacroList from './MacroList'
 import MacroStepper from './MacroStepper'
@@ -21,21 +21,21 @@ const StyledDialog = styled(Dialog)`
 `
 
 const MACRO_ACTIONS: any = {
-	SLEEP: async (ms: number) => {
+	SLEEP: async ({ time }: MacroActionData) => {
 		return new Promise((resolve) => {
-			setTimeout(() => resolve('OK'), ms)
+			setTimeout(() => resolve('OK'), time)
 		})
 	},
 
-	CLICK: (selector: string) => {
-		const el = document.querySelector(selector)
+	CLICK: ({ selector }: MacroActionData) => {
+		const el = document.querySelector(selector || '')
 		if (el) {
 			(el as HTMLElement).click()
 		}
 	},
 
-	TEXT: ({ selector, text }: { selector: string, text: string }) => {
-		const el = document.querySelector(selector) as HTMLElement
+	TEXT: ({ selector, text }: MacroActionData) => {
+		const el = document.querySelector(selector || '') as HTMLElement
 		el.focus()
 		document.execCommand('insertHTML', false, text)
 	}
@@ -46,10 +46,6 @@ export default function RunMacroOverlay() {
 	const [open, setOpen] = useState(false)
 	const [macro, setMacro] = useState<null | Macro>(null)
 	const [currentAction, setCurrentAction] = useState(-1)
-	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-	// const xxx = useSnackbar();
-
-	// console.log(xxx)
 
 	useEffect(() => {
 
@@ -73,7 +69,7 @@ export default function RunMacroOverlay() {
 				let index = 0;
 				for (let action of macro.actions) {
 					setCurrentAction(index++)
-					enqueueSnackbar(`${action.type} - ${action.data} ...`, { variant: 'info' })
+					// enqueueSnackbar(`${action.type} - ${action.data} ...`, { variant: 'info' })
 					await (MACRO_ACTIONS[action.type])(action.data)
 				}
 			}

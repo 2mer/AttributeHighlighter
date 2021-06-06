@@ -116,8 +116,8 @@ export default function RecordingOverlay() {
 
 			const newActions = [...macroActions]
 
-			if (sleepMS) newActions.push({ type: 'SLEEP', data: sleepMS })
-			newActions.push({ type: 'CLICK', data: clickSelector })
+			if (sleepMS) newActions.push({ type: 'SLEEP', data: { time: sleepMS } })
+			newActions.push({ type: 'CLICK', data: { selector: clickSelector } })
 
 			const target = (e?.target as HTMLElement)
 
@@ -131,7 +131,7 @@ export default function RecordingOverlay() {
 
 					if (text && (text !== firstVal)) {
 						const sleepMS = timer.getOffset()
-						if (sleepMS) newActions.push({ type: 'SLEEP', data: sleepMS })
+						if (sleepMS) newActions.push({ type: 'SLEEP', data: { time: sleepMS } })
 						newActions.push({
 							type: 'TEXT', data: {
 								selector: getSelector(e.target as HTMLElement),
