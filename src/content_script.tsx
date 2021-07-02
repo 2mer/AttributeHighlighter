@@ -1,34 +1,24 @@
-
-// chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-//   if (msg.color) {
-//     console.log("Receive color = " + msg.color);
-//     document.body.style.backgroundColor = msg.color;
-//     sendResponse("Change color to " + msg.color);
-//   } else {
-//     sendResponse("Color message is none.");
-//   }
-
-// console.log('Hey guys, content script mounter!!!')
-
-import { MuiThemeProvider } from '@material-ui/core';
-import { SnackbarProvider } from 'notistack';
 import React from 'react'
 import ReactDOM from "react-dom";
-import RecordingOverlay from './src/components/RecordingOverlay';
-import RunMacroOverlay from './src/components/RunMacroOverlay';
+import ContentApp from './src/components/ContentApp';
 import theme from './src/theme';
 
-const remeRoot = document.createElement('div')
-remeRoot.id = 'reme__root'
-document.body.append(remeRoot)
+import { createGenerateClassName, StylesProvider } from '@material-ui/core/styles';
+
+
+const attrhRoot = document.createElement('div')
+attrhRoot.id = 'attrh__root'
+document.body.append(attrhRoot)
+
+const classNameGenerator = createGenerateClassName({
+	seed: 'TildaExtension'
+})
 
 ReactDOM.render((
-	<MuiThemeProvider theme={theme}>
-		<SnackbarProvider maxSnack={3}>
-			<RecordingOverlay />
-			<RunMacroOverlay />
-		</SnackbarProvider>
-	</MuiThemeProvider>
-), remeRoot)
+	<StylesProvider generateClassName={classNameGenerator}>
+		<ContentApp />
+	</StylesProvider>
+), attrhRoot)
 
-console.log('%c ReMe content script loaded!', 'padding: 1rem; border: 4px solid indigo; color: indigo; font-weight: 900; background: #ce9df1; border-radius: 8px')
+// log script loaded
+console.log('%c ~tilda content script loaded!', `padding: 6px 12px; box-shadow: ${theme.shadows[8]}; color: white; background: ${theme.palette.primary.main}; border-radius: 4px; margin: 8px;`)
