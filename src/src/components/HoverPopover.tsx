@@ -91,11 +91,11 @@ const Connector = ({ flipped = false }) => {
 
 export default function HoverPopover({
 	anchorEl = null as null | Element,
-	attribute = '',
 	selector = '',
 	separator = ':',
 
 	flipAnchor = false,
+	overlays = [] as any[],
 }) {
 
 	const [actionDown, setActionDown] = useState(false)
@@ -104,13 +104,19 @@ export default function HoverPopover({
 	const [pathMatches, setPathMatches] = useState(undefined as any)
 	const [copied, setCopied] = useState(false)
 
+	const getAttributeOverlay = (el: any) => {
+		return overlays.find((o: any) => el.getAttribute(o.search))
+	}
+
 	const hoveredValue = useMemo(() => {
 		if (!anchorEl) return ''
 
+		var overlay = getAttributeOverlay(anchorEl);
+
 		return (
-			anchorEl.getAttribute(attribute) || ''
+			anchorEl.getAttribute(overlay.search) || ''
 		)
-	}, [attribute, anchorEl])
+	}, [overlays, anchorEl])
 
 	const onCopy = () => {
 		setCopied(true)
@@ -118,6 +124,8 @@ export default function HoverPopover({
 	}
 
 	const removeOldMatchesTimeout = useRef(undefined as any)
+
+
 
 	useEffect(() => {
 		/////////////////////////////////
@@ -159,8 +167,9 @@ export default function HoverPopover({
 			if (e.key === ACTION_KEY) {
 				if (hoveredValue) {
 					let str = ''
-					if (controlDown) {
-						str = `[${attribute}="${hoveredValue}"]`
+					if (controlDown && anchorEl) {
+						const overlay = getAttributeOverlay(anchorEl);
+						str = `[${overlay.search}="${hoveredValue}"]`
 					} else {
 						str = hoveredValue
 					}
@@ -172,17 +181,19 @@ export default function HoverPopover({
 			} else if (e.key === SUPER_ACTION_KEY) {
 				if (hoveredValue && pathMatches) {
 					let str = ''
-					if (controlDown) {
-						str = `[${attribute}="${hoveredValue}"]`
+					if (controlDown && anchorEl) {
+						const overlay = getAttributeOverlay(anchorEl);
+						str = `[${overlay.search}="${hoveredValue}"]`
 					} else {
 						str = hoveredValue
 					}
 
 					str = [
 						...pathMatches.map((m: any) => {
-							const val = m.getAttribute(attribute)
+							const overlay = getAttributeOverlay(m);
+							const val = m.getAttribute(overlay.search);
 							if (controlDown) {
-								return `[${attribute}="${val}"]`
+								return `[${overlay.search}="${val}"]`
 							} else {
 								return val
 							}
@@ -210,7 +221,7 @@ export default function HoverPopover({
 			window.removeEventListener('keydown', handleKeyDown)
 			window.removeEventListener('keyup', handleKeyUp)
 		}
-	}, [selector, attribute, shiftDown, controlDown, anchorEl, hoveredValue, pathMatches])
+	}, [selector, overlays, shiftDown, controlDown, anchorEl, hoveredValue, pathMatches])
 
 
 	const splitHoveredValue = useMemo(() => (
@@ -254,11 +265,12 @@ export default function HoverPopover({
 						<AncestralTree open={(shiftDown && pathMatches)}>
 							{(pathMatches) && (
 								pathMatches.map((m: any, index: number) => {
-									const matchValue = m.getAttribute(attribute)
+									const overlay = getAttributeOverlay(m);
+									const matchValue = m.getAttribute(overlay.search)
 									const separateMatchValue = (matchValue || '').split(separator)
 									return (
 										<Typography color="inherit" key={index}>
-											<Box component="span" display="inline-flex" fontSize="16px" whiteSpace="nowrap" bgcolor="primary.light" p="0 4px" borderRadius="4px">
+											<Box component="span" display="inline-flex" fontSize="16px" whiteSpace="nowrap" bgcolor={overlay.color} p="0 4px" borderRadius="4px">
 												<Fade in={controlDown} mountOnEnter unmountOnExit><Bracket>{'['}</Bracket></Fade>
 												<Divided DividerComp={SeparatorDividerMemo}>
 													{separateMatchValue}

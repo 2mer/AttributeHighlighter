@@ -2,10 +2,9 @@ import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 
 import { MuiThemeProvider } from '@material-ui/core';
 import theme from '../theme';
-import SettingsPanel from './settings/SettingsPanel';
-import HighlightOverlay from './HighlightOverlay';
 import { useState } from 'react';
 import ScopedCssBaseline from '@material-ui/core/ScopedCssBaseline';
+import NewSettingsPanel from './settings/NewSettingsPanel';
 
 export const SettingsContext = createContext([{
 	attribute: '',
@@ -14,58 +13,41 @@ export const SettingsContext = createContext([{
 }, undefined as any])
 
 export default function ContentApp() {
-
-	const [settingsOpen, setSettingsOpen] = useState(false)
-	const [mouseOverSettings, setMouseOverSettings] = useState(false)
-
 	const [settings, setSettings] = useState(undefined)
 
 	useEffect(() => {
-
-		const handleMessage = (request: any, sender: any, sendResponse: any) => {
-			switch (request.type) {
-				case "TOGGLE_SETTINGS":
-					setSettingsOpen(open => !open)
-			}
-		}
-
 		chrome.storage.local.get(['settings'], items => {
-			setSettings(items?.settings || ({
-				attribute: '',
-				tooltipEnabled: false,
-				bordersEnabled: false,
-			}))
+			setSettings(items?.settings || {})
 		})
-
-		chrome.runtime.onMessage.addListener(handleMessage)
-
-		return () => {
-			chrome.runtime.onMessage.removeListener(handleMessage)
-		}
 	}, [])
 
 	const setSettingsWithStorage = useCallback((settings: any) => {
 		chrome.storage.local.set({ settings }, () => {
 			setSettings(settings)
 		})
+
+		chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+			const activeTab = tabs[0].id;
+
+			if (activeTab) {
+				chrome.tabs.sendMessage(activeTab, { type: 'SETTINGS_CHANGED', payload: settings });
+			}
+		});
 	}, [setSettings])
 
 	const settingsContextMemo = useMemo(() => [settings, setSettingsWithStorage], [settings, setSettingsWithStorage])
 
 	return <>
-		{Boolean(settings) && (
-			<div>
-				<MuiThemeProvider theme={theme}>
-					<SettingsContext.Provider value={settingsContextMemo as any}>
-						<ScopedCssBaseline>
-							<HighlightOverlay mouseOverSettings={mouseOverSettings} />
-							<span style={{ display: 'flex' }} onMouseEnter={() => setMouseOverSettings(true)} onMouseLeave={() => setMouseOverSettings(false)}>
-								<SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-							</span>
-						</ScopedCssBaseline>
-					</SettingsContext.Provider>
-				</MuiThemeProvider>
-			</div>
-		)}
+		<div>
+			<MuiThemeProvider theme={theme}>
+				<SettingsContext.Provider value={settingsContextMemo as any}>
+					<ScopedCssBaseline>
+						<span style={{ display: 'flex' }}>
+							<NewSettingsPanel />
+						</span>
+					</ScopedCssBaseline>
+				</SettingsContext.Provider>
+			</MuiThemeProvider>
+		</div>
 	</>
 }

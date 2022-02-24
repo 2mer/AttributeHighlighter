@@ -1,4 +1,4 @@
-import { Chip, fade, TextField, withStyles } from '@material-ui/core'
+import { Chip, fade, IconButton, TextField, Tooltip, withStyles } from '@material-ui/core'
 import { Paper } from '@material-ui/core'
 import { Fade } from '@material-ui/core'
 import { Box } from '@material-ui/core'
@@ -8,6 +8,9 @@ import styled, { css } from 'styled-components'
 import theme from '../../theme'
 
 import CogOutlineIcon from 'mdi-material-ui/CogOutline'
+import TextSearchIcon from 'mdi-material-ui/TextSearch';
+import SelectSearchIcon from 'mdi-material-ui/SelectSearch';
+
 import MagnifyIcon from 'mdi-material-ui/Magnify'
 import { SettingsContext } from '../ContentApp'
 import { debounce } from '@material-ui/core'
@@ -67,15 +70,21 @@ export default function SettingsPanel({ open = false, onClose = undefined as any
 	const [settings, setSettings] = useContext(SettingsContext)
 
 	const [inputText, setInputText] = useState('')
+	const [queryMode, setQueryMode] = React.useState(false);
 
 	useEffect(() => {
 		settings && setInputText(settings.attribute)
+		settings && setQueryMode(settings.queryMode)
 	}, [settings])
 
 
 	const handleInput = useCallback(debounce((val: any) => {
 		setSettings({ ...settings, attribute: val })
 	}, 1000), [settings, setSettings])
+
+	const handleToggleQueryMode = useCallback(() => {
+		setSettings({ ...settings, queryMode: !settings.queryMode })
+	}, [settings, setSettings]);
 
 	return (
 		<Fade in={open} mountOnEnter unmountOnExit>
@@ -106,6 +115,15 @@ export default function SettingsPanel({ open = false, onClose = undefined as any
 								}}
 
 							/>
+							<Tooltip title={queryMode ? 'Query Search' : 'Attribute Search'}>
+								<IconButton onClick={handleToggleQueryMode}>
+									{queryMode ? (
+										<SelectSearchIcon />
+									) : (
+										<TextSearchIcon />
+									)}
+								</IconButton>
+							</Tooltip>
 						</Box>
 					</Box>
 				</StyledPaper>

@@ -1,21 +1,40 @@
 import React, { useEffect, useState } from 'react'
 import { fade, useTheme } from '@material-ui/core'
 import HoverPopover from './HoverPopover'
-import { SettingsContext } from './ContentApp'
-import { useContext } from 'react'
 
-export default function HighlightOverlay({ mouseOverSettings = false }) {
+export default function HighlightOverlay({ }) {
 
-	const [settings] = useContext(SettingsContext)
-	const { outlinesEnabled = false, tooltipEnabled = false, attribute = '' } = (settings || {})
+	const [settings, setSettings] = React.useState<any>();
+
+	const { overlays = [] } = (settings || {})
 
 	const [hoveredElement, setHoveredElement] = useState<Element | null>(null)
 	const [mouseHalfwayPointReached, setMouseHalfwayPointReached] = useState(false)
 
-	const selector = `[${attribute}]`
-
 	const theme = useTheme()
 
+	//on mount
+	React.useEffect(() => {
+		// load settings initially from storage
+		chrome.storage.local.get(['settings'], items => {
+			setSettings(items?.settings || {})
+		})
+
+		// load changes done to settings from message
+		const handleMessage = (request: any, sender: any, sendResponse: any) => {
+			console.log('Got request', request)
+			switch (request.type) {
+				case "SETTINGS_CHANGED":
+					setSettings(request.payload)
+			}
+		}
+
+		chrome.runtime.onMessage.addListener(handleMessage)
+
+		return () => {
+			chrome.runtime.onMessage.removeListener(handleMessage)
+		}
+	}, []);
 
 	useEffect(() => {
 
@@ -23,32 +42,54 @@ export default function HighlightOverlay({ mouseOverSettings = false }) {
 		// styles
 		/////////////////////////////////
 
-		const stylesheet = document.createElement('style')
+		const createStyleSheet = (selector: any, outlinesEnabled: any, tooltipEnabled: any, color: any) => {
+			const stylesheet = document.createElement('style')
 
-		const alwaysOnStyle = `
-			${selector} {
-				box-shadow: 0 0 0 2px ${fade(theme.palette.primary.main, 0.5)}, 0 0 0 4px ${fade(theme.palette.primary.main, 0.25 / 2)} !important;
-			}
-		`
+			const alwaysOnStyle = `
+				${selector} {
+					box-shadow: 0 0 0 2px ${fade(color, 0.5)}, 0 0 0 4px ${fade(color, 0.25 / 2)} !important;
+				}
+			`
 
-		const eitherOnStyle = `
-			${selector}:hover {
-				box-shadow: 0 0 0 2px ${theme.palette.primary.main}, 0 0 0 4px ${fade(theme.palette.primary.main, 0.25)} !important;
-			}
-		`
+			const eitherOnStyle = `
+				${selector}:hover {
+					box-shadow: 0 0 0 2px ${color}, 0 0 0 4px ${fade(color, 0.25)} !important;
+				}
+			`
 
-		stylesheet.innerHTML = `
-			${outlinesEnabled ? alwaysOnStyle : ''}	
+			stylesheet.innerHTML = `
+				${outlinesEnabled ? alwaysOnStyle : ''}	
+	
+				${(outlinesEnabled || tooltipEnabled) ? eitherOnStyle : ''}
+			`
 
-			${(outlinesEnabled || tooltipEnabled) ? eitherOnStyle : ''}
-		`
+			return stylesheet;
+		}
 
-		document.body.append(stylesheet)
+
+		const styleSheets: any[] = [];
+
+		overlays.filter((o: any) => o.enabled).forEach((overlay: any) => {
+			const { search, queryMode, tooltipEnabled, outlinesEnabled } = overlay;
+			const selector = queryMode ? search : `[${search}]`
+
+			const stylesheet = createStyleSheet(selector, outlinesEnabled, tooltipEnabled, overlay.color);
+
+			document.body.append(stylesheet);
+			styleSheets.push(stylesheet);
+		})
+
 
 		return () => {
-			stylesheet.parentNode?.removeChild(stylesheet)
+			styleSheets.forEach((stylesheet: any) => {
+				stylesheet.parentNode?.removeChild(stylesheet)
+			})
 		}
-	}, [selector, outlinesEnabled, tooltipEnabled])
+	}, [overlays])
+
+	const tooltipOverlays = React.useMemo(() => overlays.filter((o: any) => o.enabled && o.tooltipEnabled), [overlays]);
+	const tooltipSelector = React.useMemo(() => `:is(${tooltipOverlays.map((o: any) => o.search).join(',')})`, [tooltipOverlays])
+	const tooltipEnabled = Boolean(tooltipOverlays?.length)
 
 	useEffect(() => {
 		/////////////////////////////////
@@ -56,9 +97,9 @@ export default function HighlightOverlay({ mouseOverSettings = false }) {
 		/////////////////////////////////
 
 		const handleMouseMove = (e: MouseEvent) => {
-			if (attribute) {
+			if (tooltipSelector) {
 				const element = e.target as Element
-				const closest = element.closest(selector)
+				const closest = element.closest(tooltipSelector)
 				setHoveredElement(closest)
 			}
 			if (e.clientX > (document.documentElement.clientWidth / 2)) {
@@ -73,17 +114,17 @@ export default function HighlightOverlay({ mouseOverSettings = false }) {
 		return () => {
 			window.removeEventListener('mousemove', handleMouseMove)
 		}
-	}, [selector, hoveredElement])
+	}, [overlays, hoveredElement])
 
 
 	return (
 		<HoverPopover
-			anchorEl={(tooltipEnabled && (!mouseOverSettings)) ? hoveredElement : undefined}
+			anchorEl={(tooltipEnabled) ? hoveredElement : undefined}
 
 			flipAnchor={mouseHalfwayPointReached}
 
-			attribute={attribute}
-			selector={selector}
+			selector={tooltipSelector}
+			overlays={overlays}
 		/>
 	)
 }

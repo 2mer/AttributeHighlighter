@@ -1,36 +1,27 @@
 {
-	"manifest_version": 2,
-	"name": "Tilda",
-	"description": "Highlight DOM attributes, and copy their attribute path",
-	"version": "1.0",
-	"icons": {
-		"16": "icon16.png",
-		"48": "icon48.png",
-		"128": "icon128.png"
-	},
-	"browser_action": {
-		"default_icon": "icon48.png"
-	},
-	"content_scripts": [
-		{
-			"matches": [
-				"<all_urls>"
-			],
-			"js": [
-				"js/vendor.js",
-				"js/content_script.js"
-			],
-			"run_at": "document_end"
-		}
-	],
-	"background": {
-		"scripts": [
-			"js/vendor.js",
-			"js/background.js"
-		]
-	},
-	"permissions": [
-		"storage",
-		"<all_urls>"
-	]
+  "manifest_version": 3,
+  "name": "Tilda",
+  "description": "Highlight DOM attributes, and copy their attribute path",
+  "version": "2.0",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/vendor.js", "js/content_script.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_icon": { "48": "icon48.png" },
+    "default_popup": "popup.html"
+  }
 }

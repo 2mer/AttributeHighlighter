@@ -1,9 +1,9 @@
 import React from 'react'
 import ReactDOM from "react-dom";
-import ContentApp from './src/components/ContentApp';
 import theme from './src/theme';
 
 import { createGenerateClassName, StylesProvider } from '@material-ui/core/styles';
+import HighlightOverlay from './src/components/HighlightOverlay';
 
 
 const attrhRoot = document.createElement('div')
@@ -16,7 +16,7 @@ const classNameGenerator = createGenerateClassName({
 
 ReactDOM.render((
 	<StylesProvider generateClassName={classNameGenerator}>
-		<ContentApp />
+		<HighlightOverlay />
 	</StylesProvider>
 ), attrhRoot)
 
