@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from "react-dom";
 
-import HighlightOverlay from './src/components/HighlightOverlay';
+import HighlightOverlay from './components/HighlightOverlay';
 
 
 const attrhRoot = document.createElement('div')

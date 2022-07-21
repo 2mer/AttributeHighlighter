@@ -1,7 +1,7 @@
 import * as React from 'react';
 import ReactDOM from 'react-dom';
 
-const LazyContent = React.lazy(() => import('./src/components/ContentApp'))
+const LazyContent = React.lazy(() => import('./components/ContentApp'))
 
 const WithSuspense = () => {
 	const [mounted, setMounted] = React.useState(false);
