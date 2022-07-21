@@ -1,10 +1,24 @@
 import * as React from 'react';
 import ReactDOM from 'react-dom';
-import ContentApp from './src/components/ContentApp';
+
+const LazyContent = React.lazy(() => import('./src/components/ContentApp'))
+
+const WithSuspense = () => {
+	const [mounted, setMounted] = React.useState(false);
+
+	//on mount
+	React.useEffect(() => {
+		setTimeout(() => {
+			setMounted(true);
+		})
+	}, []);
+
+	return mounted && <React.Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', width: '500px', boxSizing: 'border-box' }}>Loading...</div>}>
+		<LazyContent />
+	</React.Suspense>
+}
 
 ReactDOM.render(
-	// <React.StrictMode>
-	<ContentApp />
-	// </React.StrictMode>,
+	<WithSuspense />
 	, document.getElementById("root")
 );

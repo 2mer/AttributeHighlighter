@@ -1,40 +1,27 @@
-import { Box, createMuiTheme, debounce, fade, IconButton, MuiThemeProvider, Switch, TextField, Tooltip } from '@material-ui/core';
-import { blue } from '@material-ui/core/colors';
-import { Search as SearchIcon } from '@material-ui/icons';
-import { Palette as PaletteIcon, Selection as SelectionIcon, TooltipTextOutline as TooltipTextOutlineIcon, TrashCan } from 'mdi-material-ui';
+import { ActionIcon, ColorSwatch, Group, Switch, TextInput, Tooltip, useMantineTheme } from '@mantine/core';
+import { IconMessage2, IconLayoutDashboard, IconSearch, IconTrash, IconBracketsContain } from '@tabler/icons';
+import debounce from 'lodash-es/debounce';
 import * as React from 'react';
+import fade from '../../util/fade';
 import ColorPicker from './ColorPicker';
 
-const OverlaySettings = ({ overlay, setOverlay }: any) => {
-
-
-	const color = overlay?.color || blue[500];
-
-	const theme = React.useMemo(() => {
-		return createMuiTheme({
-			palette: {
-				primary: {
-					main: color,
-				}
-			}
-		})
-	}, [color]);
+const OverlaySettings = ({ overlay, setOverlay, deleteOverlay }: any) => {
 
 	return (
-		<MuiThemeProvider theme={theme}>
-			<OverlaySettingsContent overlay={overlay} setOverlay={setOverlay} />
-		</MuiThemeProvider>
+		<OverlaySettingsContent overlay={overlay} setOverlay={setOverlay} deleteOverlay={deleteOverlay} />
 	);
 
 }
 
 const OverlaySettingsContent = ({ overlay, setOverlay, deleteOverlay }: any) => {
 
+	const theme = useMantineTheme();
+
 	const [colorPickerOpen, setColorPickerOpen] = React.useState(false);
 	const [colorAnchor, setColorAnchor] = React.useState();
 
 
-	const { queryMode = false, tooltipEnabled = false, outlinesEnabled = false, color = blue[500], search = '', enabled = false } = overlay;
+	const { queryMode = false, tooltipEnabled = false, outlinesEnabled = false, color = theme.colors.blue[5], search = '', enabled = false } = overlay;
 	const [textFieldValue, setTextFieldValue] = React.useState(search);
 
 
@@ -49,62 +36,58 @@ const OverlaySettingsContent = ({ overlay, setOverlay, deleteOverlay }: any) => 
 	}
 
 	return (
-		<Box display="flex" width="100%" alignItems="center" bgcolor={fade(color, 0.1)}>
+		<Group noWrap p="sm" spacing="sm" sx={{ display: 'flex', width: '100%', alignItems: 'center', background: `linear-gradient(to right, ${fade(color, 0.1)}, transparent)` }}>
+			{/* color */}
+			<ColorPicker open={colorPickerOpen} value={color} onChange={(c: any) => setOverlay({ ...overlay, color: c })} onClose={() => setColorPickerOpen(false)}>
+				<Tooltip label="Color">
+					<span>
+						<ColorSwatch color={color} onClick={() => setColorPickerOpen(prev => !prev)} radius="sm" />
+					</span>
+				</Tooltip>
+			</ColorPicker>
+
 			{/* search type */}
-			<Tooltip title={isAttributeMode ? 'Attribute Search' : 'Query Selector Search'}>
+			<Tooltip label={isAttributeMode ? 'Attribute Search' : 'Query Selector Search'}>
 				<span>
-					<IconButton color="primary">
-						<SearchIcon />
-					</IconButton>
+					<ActionIcon onClick={() => setOverlay({ ...overlay, queryMode: !queryMode })}>
+						{isAttributeMode ? <IconBracketsContain /> : <IconSearch />}
+					</ActionIcon>
 				</span>
 			</Tooltip>
 
 			{/* search field */}
-			<TextField size="small" color="primary" variant="outlined" placeholder="Query" value={textFieldValue} onChange={handleSearchChange} style={{ flex: 1, background: 'white', borderRadius: 4 }} InputProps={{ style: { padding: '5px 0' } }} />
+			<TextInput size="sm" placeholder="Query" value={textFieldValue} onChange={handleSearchChange} style={{ flex: 1, background: 'white', borderRadius: 4 }} />
 
 			{/* outlines */}
-			<Tooltip title={outlinesEnabled ? 'Disable Outlines' : 'Enable Outlines'}>
+			<Tooltip label={outlinesEnabled ? 'Disable Outlines' : 'Enable Outlines'}>
 				<span>
-					<IconButton color={outlinesEnabled ? 'primary' : undefined} onClick={() => setOverlay({ ...overlay, outlinesEnabled: !outlinesEnabled })}>
-						<SelectionIcon />
-					</IconButton>
+					<ActionIcon color={outlinesEnabled ? 'primary' : undefined} onClick={() => setOverlay({ ...overlay, outlinesEnabled: !outlinesEnabled })}>
+						<IconLayoutDashboard />
+					</ActionIcon>
 				</span>
 			</Tooltip>
 
 			{/* tooltip */}
-			<Tooltip title={tooltipEnabled ? 'Disable Tooltip' : 'Enable Tooltip'}>
+			<Tooltip label={tooltipEnabled ? 'Disable Tooltip' : 'Enable Tooltip'}>
 				<span>
-					<IconButton disabled={!isAttributeMode} color={(isAttributeMode && tooltipEnabled) ? 'primary' : undefined} onClick={() => setOverlay({ ...overlay, tooltipEnabled: !tooltipEnabled })}>
-						<TooltipTextOutlineIcon />
-					</IconButton>
-				</span>
-			</Tooltip>
-
-			{/* color */}
-			<Tooltip title="Color">
-				<span>
-					<IconButton ref={(node: any) => setColorAnchor(node)} color="primary" onClick={() => setColorPickerOpen(prev => !prev)}>
-						<PaletteIcon />
-					</IconButton>
+					<ActionIcon disabled={!isAttributeMode} color={(isAttributeMode && tooltipEnabled) ? 'primary' : undefined} onClick={() => setOverlay({ ...overlay, tooltipEnabled: !tooltipEnabled })}>
+						<IconMessage2 />
+					</ActionIcon>
 				</span>
 			</Tooltip>
 
 			{/* enable/disable switch */}
-			<Tooltip title={enabled ? 'Disable Overlay' : 'Enable Overlay'}>
-				<Switch color="primary" checked={enabled} onChange={() => setOverlay({ ...overlay, enabled: !enabled })} />
+			<Tooltip label={enabled ? 'Disable Overlay' : 'Enable Overlay'}>
+				<Switch checked={enabled} onChange={() => setOverlay({ ...overlay, enabled: !enabled })} />
 			</Tooltip>
 
 			{/* delete overlay */}
-			<Tooltip title="Delete Overlay">
-				<Box color="error.main">
-					<IconButton color="inherit" onClick={deleteOverlay}>
-						<TrashCan />
-					</IconButton>
-				</Box>
+			<Tooltip label="Delete Overlay">
+				<ActionIcon color="red" onClick={deleteOverlay}>
+					<IconTrash />
+				</ActionIcon>
 			</Tooltip>
-
-			<ColorPicker anchorEl={colorAnchor} open={colorPickerOpen} value={color} onChange={(c: any) => setOverlay({ ...overlay, color: c })} onClose={() => setColorPickerOpen(false)} />
-		</Box>
+		</Group>
 	);
 
 }

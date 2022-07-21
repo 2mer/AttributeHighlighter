@@ -1,16 +1,20 @@
 import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 
-import { MuiThemeProvider } from '@material-ui/core';
-import theme from '../theme';
 import { useState } from 'react';
-import ScopedCssBaseline from '@material-ui/core/ScopedCssBaseline';
-import NewSettingsPanel from './settings/NewSettingsPanel';
+import SettingsPanel from './settings/SettingsPanel';
+import { MantineProvider } from '@mantine/core';
 
 export const SettingsContext = createContext([{
 	attribute: '',
 	tooltipEnabled: false,
 	bordersEnabled: false,
 }, undefined as any])
+
+const theme = {
+	fontFamily: 'Verdana, sans-serif',
+	fontFamilyMonospace: 'Monaco, Courier, monospace',
+	headings: { fontFamily: 'Greycliff CF, sans-serif' },
+};
 
 export default function ContentApp() {
 	const [settings, setSettings] = useState(undefined)
@@ -39,15 +43,13 @@ export default function ContentApp() {
 
 	return <>
 		<div>
-			<MuiThemeProvider theme={theme}>
+			<MantineProvider theme={theme}>
 				<SettingsContext.Provider value={settingsContextMemo as any}>
-					<ScopedCssBaseline>
-						<span style={{ display: 'flex' }}>
-							<NewSettingsPanel />
-						</span>
-					</ScopedCssBaseline>
+					<span style={{ display: 'flex' }}>
+						<SettingsPanel />
+					</span>
 				</SettingsContext.Provider>
-			</MuiThemeProvider>
+			</MantineProvider>
 		</div>
 	</>
 }
