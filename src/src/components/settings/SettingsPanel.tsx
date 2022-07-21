@@ -1,115 +1,76 @@
-import { Chip, fade, TextField, withStyles } from '@material-ui/core'
-import { Paper } from '@material-ui/core'
-import { Fade } from '@material-ui/core'
-import { Box } from '@material-ui/core'
-import React, { useCallback, useContext, useEffect, useState } from 'react'
+import { Box, Button, Group, Paper, Stack, Switch, Text, Title, Tooltip, useMantineTheme } from '@mantine/core';
+import * as React from 'react';
+import { SettingsContext } from '../ContentApp';
+import OverlaySettings from './OverlaySettings';
+import { IconPlus } from '@tabler/icons';
 
-import styled, { css } from 'styled-components'
-import theme from '../../theme'
+const SettingsPanel = () => {
 
-import CogOutlineIcon from 'mdi-material-ui/CogOutline'
-import MagnifyIcon from 'mdi-material-ui/Magnify'
-import { SettingsContext } from '../ContentApp'
-import { debounce } from '@material-ui/core'
+	const theme = useMantineTheme();
 
-const StyledPaper = withStyles({
-	root: {
-		backgroundColor: fade(theme.palette.primary.main, 0.25),
-		backdropFilter: 'blur(10px)',
-		overflow: 'hidden',
-		border: `2px solid ${theme.palette.primary.main}`
-	}
-})(Paper)
+	const [settings, setSettings] = React.useContext(SettingsContext)
 
-const ToggleButtonRoot = styled.div<{ $pressed: boolean }>`
-	cursor: pointer;
-	user-select: none;
+	const { overlays = [] } = settings || {};
 
-	display: inline-flex;
-	text-align: center;
-	justify-content: center;
-
-	margin: 0 4px 2px 4px;
-	min-width: 10px;
-	padding: 2px 6px;
-
-	box-shadow: 0 ${p => p.$pressed ? 0 : 2}px 0 ${fade(theme.palette.primary.main, 0.24)};
-	color: ${p => p.$pressed ? 'white' : theme.palette.primary.main};
-	background: ${p => fade(theme.palette.primary.main, p.$pressed ? 1 : 0.12)};
-	border-radius: 2px;
-	
-	transition: all 255ms;
-
-	&:hover {
-		filter: brightness(1.1);
+	const setOverlay = (index: number, overlay: any) => {
+		setSettings({ ...settings, overlays: overlays.map((o: any, i: number) => (i === index) ? overlay : o) });
 	}
 
-	&:active {
-		box-shadow: none;
-		transform: translateY(2px);
+	const removeOverlay = (index: number) => {
+		setSettings({ ...settings, overlays: overlays.filter((_: any, i: number) => (i !== index)) });
 	}
 
-	${p => p.$pressed && css`
-		transform: translateY(2px);
-	`}
-`
+	const addOverlay = () => {
+		setSettings({ ...settings, overlays: [...overlays, { search: '', color: theme.colors.blue[5], enabled: true, outlinesEnabled: true, queryMode: false }] });
+	}
 
-const ToggleButton = ({ children = undefined as any, onClick = undefined as any, value = false }) => {
-	return (
-		<ToggleButtonRoot $pressed={value} onClick={onClick}>
-			{children}
-		</ToggleButtonRoot>
-	)
-}
+	const toggleEnabled = () => {
+		setSettings({ ...settings, enabled: !settings.enabled });
+	}
 
-export default function SettingsPanel({ open = false, onClose = undefined as any }) {
-
-	const [settings, setSettings] = useContext(SettingsContext)
-
-	const [inputText, setInputText] = useState('')
-
-	useEffect(() => {
-		settings && setInputText(settings.attribute)
-	}, [settings])
-
-
-	const handleInput = useCallback(debounce((val: any) => {
-		setSettings({ ...settings, attribute: val })
-	}, 1000), [settings, setSettings])
+	const { enabled = true } = settings || {};
 
 	return (
-		<Fade in={open} mountOnEnter unmountOnExit>
-			<Box m="16px" boxShadow={6} zIndex="99999999" position="fixed" top="0" right="0" borderRadius="4px" overflow="hidden">
-				<StyledPaper>
-					<Box display="flex">
-						<Box display="flex" p="6px 12px" gridGap="6px">
-							{/* toggles */}
-							<ToggleButton value={settings?.outlinesEnabled} onClick={() => setSettings({ ...settings, outlinesEnabled: !settings?.outlinesEnabled })}>Outlines</ToggleButton>
-							<ToggleButton value={settings?.tooltipEnabled} onClick={() => setSettings({ ...settings, tooltipEnabled: !settings?.tooltipEnabled })}>Tooltip</ToggleButton>
-						</Box>
-						<Box display="flex" p="6px 12px" gridGap="6px" bgcolor="background.paper">
-							<TextField
+		<Paper sx={{ width: '500px', filter: enabled ? undefined : 'grayscale(1)' }}>
+			{/* header */}
+			<Box sx={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
+				<Box sx={{ backgroundColor: "#0099ff", zIndex: 2 }}>
+					<Group noWrap position="apart" sx={{ marginLeft: '4rem', marginBottom: '-1.5rem', paddingTop: '1rem', marginRight: '2rem' }}>
+						<Text
+							weight={700}
+							style={{ fontFamily: 'Greycliff CF, sans-serif', fontSize: '40px' }}
+							color="white"
+						>Tilda</Text>
+						<Switch onLabel="ON" offLabel="OFF" size="xl" checked={enabled} onChange={toggleEnabled} />
+					</Group>
+				</Box>
 
-								value={inputText}
-								onChange={e => {
-									setInputText(e.target.value)
-									handleInput(e.target.value)
-								}}
-
-								placeholder="Attribute"
-								InputProps={{
-									disableUnderline: true,
-									startAdornment: <MagnifyIcon color="primary" />,
-									endAdornment: (
-										<Chip size="small" color="primary" variant="outlined" icon={<CogOutlineIcon />} label="tilda" />
-									),
-								}}
-
-							/>
-						</Box>
-					</Box>
-				</StyledPaper>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+					<path fill="#0099ff" fillOpacity="1" d="M0,128L60,144C120,160,240,192,360,186.7C480,181,600,139,720,112C840,85,960,75,1080,85.3C1200,96,1320,128,1380,144L1440,160L1440,0L1380,0C1320,0,1200,0,1080,0C960,0,840,0,720,0C600,0,480,0,360,0C240,0,120,0,60,0L0,0Z"></path>
+				</svg>
 			</Box>
-		</Fade>
-	)
+
+
+			<Stack p="md" spacing="md" sx={{ pointerEvents: enabled ? undefined : 'none' }}>
+				<Box>
+					<Text>Overlays</Text>
+				</Box>
+
+				{/* overlay content area */}
+				<Box sx={{ borderRadius: '6px', boxShadow: '0 0 0 1px inset #d3d7da' }}>
+					<Box sx={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', borderRadius: '6px' }}>
+						{overlays.map((o: any, index: number) => <OverlaySettings key={index} overlay={o} setOverlay={(overlay: any) => setOverlay(index, overlay)} deleteOverlay={() => removeOverlay(index)} />)}
+					</Box>
+				</Box>
+
+				{/* add overlay button */}
+				<Stack>
+					<Button onClick={addOverlay} color="primary" variant="gradient" gradient={{ from: 'teal', to: 'blue', deg: 60 }} leftIcon={<IconPlus />}>Add Overlay</Button>
+				</Stack>
+			</Stack>
+		</Paper>
+	);
+
 }
+
+export default React.memo(SettingsPanel);
